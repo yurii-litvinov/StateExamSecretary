@@ -1,19 +1,23 @@
+// <copyright file="YandexDiskDownloader.cs" company="Maria Myasnikova">
+// Copyright (c) Maria Myasnikova. All rights reserved.
+// Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
+// </copyright>
+
+namespace ScheduleParser;
+
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Web;
 
-namespace ScheduleParser;
-
+/// <summary>
+/// Class for downloading a file from Yandex.Disk.
+/// </summary>
 public static class YandexDiskDownloader
 {
-    private struct Response
-    {
-        [JsonPropertyName("href")] public required string Href { get; set; }
-    }
-
     /// <summary>
     /// Downloads a public file from Yandex.Disk.
     /// </summary>
+    /// <param name="fileUrl">File reference.</param>
     /// <returns>Stream to open a file.</returns>
     public static async Task<Stream> DownloadFile(string fileUrl)
     {
@@ -29,11 +33,16 @@ public static class YandexDiskDownloader
         {
             throw new ArgumentException($"Неверная ссылка: {fileUrl}");
         }
-        
+
         var body = JsonSerializer.Deserialize<Response>(await response.Content.ReadAsStreamAsync());
         var responseUri = body.Href;
 
         return await client.GetStreamAsync(responseUri);
     }
 
+    private struct Response
+    {
+        [JsonPropertyName("href")]
+        public string Href { get; set; }
+    }
 }

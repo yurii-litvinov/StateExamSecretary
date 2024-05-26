@@ -1,20 +1,30 @@
+// <copyright file="ScheduleParser.cs" company="Maria Myasnikova">
+// Copyright (c) Maria Myasnikova. All rights reserved.
+// Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
+// </copyright>
+
+namespace ScheduleParser;
+
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
-using ScheduleParser.Models;
-
-namespace ScheduleParser;
+using Models;
 
 /// <summary>
 /// Class for parsing the schedule.
 /// </summary>
 /// <param name="config">Instance of the <see cref="Config"/> class containing
 /// paths or links to files with schedule and work themes.</param>
+[SuppressMessage(
+    "StyleCop.CSharp.SpacingRules",
+    "SA1010:OpeningSquareBracketsMustBeSpacedCorrectly",
+    Justification = "Causes another problem with spaces.")]
 public class ScheduleParser(Config.Config config)
 {
-    private int _rowIndex = 1;
-    private readonly List<DaySchedule> _days = [];
     private const string TextInBracketsPattern = @" \([^)]*\)";
+    private readonly List<DaySchedule> days = [];
+    private int rowIndex = 1;
 
     /// <summary>
     /// Parse the schedule for the days.
@@ -26,133 +36,53 @@ public class ScheduleParser(Config.Config config)
         scheduleWorkbook.MissingCellPolicy = MissingCellPolicy.CREATE_NULL_AS_BLANK;
         var sheet = scheduleWorkbook.GetSheetAt(0);
 
-        while (_rowIndex < sheet.LastRowNum)
+        while (this.rowIndex < sheet.LastRowNum)
         {
-            FetchDay(sheet);
-            _rowIndex++;
+            this.FetchDay(sheet);
+            this.rowIndex++;
         }
 
-        return _days;
+        return this.days;
     }
 
     /// <summary>
-    /// Adds a new day to the list of days or updates information about the last day.
+    /// Determines whether the string is a path or a link to the file and returns the stream.
     /// </summary>
-    /// <param name="sheet">Sheet with schedule.</param>
-    private void FetchDay(ISheet sheet)
-    {
-        var row = sheet.GetRow(_rowIndex);
-        var cells = new List<List<ICell>>();
+    private static Stream GetStream(string path)
+        => Uri.IsWellFormedUriString(path, UriKind.Absolute)
+            ? YandexDiskDownloader.DownloadFile(path).Result
+            : new FileStream(path, FileMode.Open, FileAccess.Read);
 
-        while (!CellsAreEmpty(row.Cells))
-        {
-            if (!CellsAreEmpty(row.Cells[1..]))
-            {
-                var rowCells = new List<ICell>();
-                for (var i = 0; i < 8; i++)
-                {
-                    rowCells.Add(row.GetCell(i));
-                }
+    private static bool CellsAreEmpty(List<ICell> cells)
+        => cells.All(cell => cell.CellType == CellType.Blank);
 
-                cells.Add(rowCells);
-            }
+    /// <summary>
+    /// Verifies that the meeting is dedicated to the work of bachelors or masters.
+    /// </summary>
+    /// <param name="info">Information about the meeting.</param>
+    private static bool IsMeetingCorrect(string info)
+        => info.Contains("бакалавры", StringComparison.OrdinalIgnoreCase) ||
+           info.Contains("магистры", StringComparison.OrdinalIgnoreCase);
 
-            _rowIndex++;
-            row = sheet.GetRow(_rowIndex);
-        }
-
-        var date = Regex.Replace(cells[0][1].StringCellValue, TextInBracketsPattern, "");
-        var meeting = FetchMeeting(cells[1..]);
-
-        if (!IsMeetingCorrect(meeting.MeetingInfo))
-        {
-            return;
-        }
-
-        FetchConsultants(meeting);
-
-        if (_days.Count != 0 && _days.Last().Date == date)
-        {
-            _days.Last().CommissionMeetings.Add(meeting);
-        }
-        else
-        {
-            var members = cells
-                .TakeWhile(rowCells => rowCells[6].CellType != CellType.Blank)
-                .Select(rowCells => rowCells[6].StringCellValue)
-                .ToList();
-
-            var day = new DaySchedule(date, members, [meeting]);
-            _days.Add(day);
-        }
-    }
-    
     /// <summary>
     /// Fetches information about the commission meeting.
     /// </summary>
     /// <param name="cells">Cells with information about the meeting.</param>
     /// <returns>Instance of <see cref="CommissionMeeting"/> class.</returns>
-    private CommissionMeeting FetchMeeting(List<List<ICell>> cells)
+    private static CommissionMeeting FetchMeeting(List<List<ICell>> cells)
     {
-        var timeAndAuditorium = cells[0][1].StringCellValue;
-        var meetingInfo = cells[0][2].StringCellValue;
+        var timeAndAuditorium = cells[0][ScheduleColumns.DateTimeAuditorium].StringCellValue;
+        var meetingInfo = cells[0][ScheduleColumns.MeetingInfo].StringCellValue;
         var studentWorks = cells[1..].Select(FetchStudentWork)
-            .Where(work => work.StudentName != "").ToList();
+            .Where(work => work.StudentName != string.Empty).ToList();
 
         return new CommissionMeeting(timeAndAuditorium, meetingInfo, studentWorks);
     }
-    
-    /// <summary>
-    /// Adds consultants from tables with themes for students at the meeting.
-    /// </summary>
-    private void FetchConsultants(CommissionMeeting meeting)
-    {
-        var infoSplit = meeting.MeetingInfo.Split(", ");
-        var chairSheet = GetChairSheet(infoSplit[0], infoSplit[1]);
 
-        var studentsAndConsultants = new List<(string, string)>();
-        for (var i = 1; i < chairSheet.LastRowNum; i++)
-        {
-            var row = chairSheet.GetRow(i);
-            studentsAndConsultants.Add(
-                (row.GetCell(0).StringCellValue, row.GetCell(4).StringCellValue)
-            );
-        }
-
-        foreach (var studentWork in meeting.StudentWorks)
-        {
-            var student = studentWork.StudentName;
-            foreach (var pair in studentsAndConsultants.Where(pair => student == pair.Item1))
-            {
-                studentWork.Consultant = pair.Item2;
-            }
-        }
-    }
-    
-    /// <summary>
-    /// Gets the chair sheet from the table with themes related to this level of education.
-    /// </summary>
-    private ISheet GetChairSheet(string chair, string level)
-    {
-        var stream = GetStream(level switch
-        {
-            "бакалавры МОиАИС" => config.BachelorsMs,
-            "бакалавры ПИ" => config.BachelorsSe,
-            "магистры МОиАИС" => config.MastersMs,
-            "магистры ПИ" => config.MastersSe,
-            _ => throw new ArgumentException($"Неверный уровень образования: {level}")
-        });
-        var workbook = new XSSFWorkbook(stream);
-
-        return chair == "Информатика/ПА"
-            ? MergeSheets([workbook.GetSheet("Информатики"), workbook.GetSheet("ПА")])
-            : workbook.GetSheet(chair);
-    }
-    
     /// <summary>
     /// Merge sheets with same header.
     /// </summary>
-    private ISheet MergeSheets(List<ISheet> sheets)
+    private static ISheet MergeSheets(List<ISheet> sheets)
     {
         var newSheet = new XSSFWorkbook().CreateSheet();
         var newRowIndex = 0;
@@ -179,45 +109,139 @@ public class ScheduleParser(Config.Config config)
 
         return newSheet;
     }
-    
+
     /// <summary>
     /// Fetches information about the student work.
     /// </summary>
     /// <param name="cells">Cells with information about the student work.</param>
     /// <returns>Instance of <see cref="StudentWork"/> class.</returns>
-    private StudentWork FetchStudentWork(List<ICell> cells)
+    private static StudentWork FetchStudentWork(List<ICell> cells)
     {
-        var number = cells[0].NumericCellValue;
-        var studentName = cells[1].StringCellValue;
-        var theme = cells[2].StringCellValue;
-        var supervisor = cells[3].StringCellValue;
-        var reviewer = cells[4].StringCellValue;
+        var number = cells[ScheduleColumns.Number].NumericCellValue;
+        var studentName = cells[ScheduleColumns.StudentName].StringCellValue;
+        var theme = cells[ScheduleColumns.Theme].StringCellValue;
+        var supervisor = cells[ScheduleColumns.Supervisor].StringCellValue;
+        var reviewer = cells[ScheduleColumns.Reviewer].StringCellValue;
 
-        return new StudentWork((int)number, studentName, theme, supervisor, "", reviewer);
-    }
-
-    private bool CellsAreEmpty(List<ICell> cells)
-    {
-        return cells.All(cell => cell.CellType == CellType.Blank);
-    }
-    
-    /// <summary>
-    /// Verifies that the meeting is dedicated to the work of bachelors or masters.
-    /// </summary>
-    /// <param name="info">Information about the meeting.</param>
-    private bool IsMeetingCorrect(string info)
-    {
-        return info.Contains("бакалавры", StringComparison.OrdinalIgnoreCase) ||
-               info.Contains("магистры", StringComparison.OrdinalIgnoreCase);
+        return new StudentWork((int)number, studentName, theme, supervisor, string.Empty, reviewer);
     }
 
     /// <summary>
-    /// Determines whether the string is a path or a link to the file and returns the stream.
+    /// Adds a new day to the list of days or updates information about the last day.
     /// </summary>
-    private Stream GetStream(string path)
+    /// <param name="sheet">Sheet with schedule.</param>
+    private void FetchDay(ISheet sheet)
     {
-        return Uri.IsWellFormedUriString(path, UriKind.Absolute)
-            ? YandexDiskDownloader.DownloadFile(path).Result
-            : new FileStream(path, FileMode.Open, FileAccess.Read);
+        var row = sheet.GetRow(this.rowIndex);
+        var cells = new List<List<ICell>>();
+
+        while (!CellsAreEmpty(row.Cells))
+        {
+            if (!CellsAreEmpty(row.Cells[1..]))
+            {
+                var rowCells = new List<ICell>();
+                for (var i = 0; i < 8; i++)
+                {
+                    rowCells.Add(row.GetCell(i));
+                }
+
+                cells.Add(rowCells);
+            }
+
+            this.rowIndex++;
+            row = sheet.GetRow(this.rowIndex);
+        }
+
+        var date = Regex.Replace(
+            cells[0][ScheduleColumns.DateTimeAuditorium].StringCellValue,
+            TextInBracketsPattern,
+            string.Empty);
+        var meeting = FetchMeeting(cells[1..]);
+
+        if (!IsMeetingCorrect(meeting.MeetingInfo))
+        {
+            return;
+        }
+
+        this.FetchConsultants(meeting);
+
+        if (this.days.Count != 0 && this.days.Last().Date == date)
+        {
+            this.days.Last().CommissionMeetings.Add(meeting);
+        }
+        else
+        {
+            var members = cells
+                .TakeWhile(rowCells => rowCells[ScheduleColumns.CommissionMember].CellType != CellType.Blank)
+                .Select(rowCells => rowCells[ScheduleColumns.CommissionMember].StringCellValue)
+                .ToList();
+
+            var day = new DaySchedule(date, members, [meeting]);
+            this.days.Add(day);
+        }
+    }
+
+    /// <summary>
+    /// Adds consultants from tables with themes for students at the meeting.
+    /// </summary>
+    private void FetchConsultants(CommissionMeeting meeting)
+    {
+        var infoSplit = meeting.MeetingInfo.Split(", ");
+        var chairSheet = this.GetChairSheet(infoSplit[0], infoSplit[1]);
+
+        var studentsAndConsultants = new List<(string, string)>();
+        for (var i = 1; i < chairSheet.LastRowNum; i++)
+        {
+            var row = chairSheet.GetRow(i);
+            studentsAndConsultants.Add((row.GetCell(ThemesColumns.StudentName).StringCellValue, row.GetCell(ThemesColumns.Consultant).StringCellValue));
+        }
+
+        foreach (var studentWork in meeting.StudentWorks)
+        {
+            var student = studentWork.StudentName;
+            foreach (var pair in studentsAndConsultants.Where(pair => student == pair.Item1))
+            {
+                studentWork.Consultant = pair.Item2;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the chair sheet from the table with themes related to this level of education.
+    /// </summary>
+    private ISheet GetChairSheet(string chair, string level)
+    {
+        var stream = GetStream(
+            level switch
+            {
+                "бакалавры техпрога" => config.BachelorsPt,
+                "бакалавры ПИ" => config.BachelorsSe,
+                "магистры техпрога" => config.MastersPt,
+                "магистры ПИ" => config.MastersSe,
+                _ => throw new ArgumentException($"Неверный уровень образования: {level}")
+            });
+        var workbook = new XSSFWorkbook(stream);
+
+        return chair == "Информатика/ПА"
+            ? MergeSheets([workbook.GetSheet("Информатики"), workbook.GetSheet("ПА")])
+            : workbook.GetSheet(chair);
+    }
+
+    private static class ScheduleColumns
+    {
+        public const int Number = 0;
+        public const int StudentName = 1;
+        public const int DateTimeAuditorium = 1;
+        public const int Theme = 2;
+        public const int MeetingInfo = 2;
+        public const int Supervisor = 3;
+        public const int Reviewer = 4;
+        public const int CommissionMember = 5;
+    }
+
+    private static class ThemesColumns
+    {
+        public const int StudentName = 0;
+        public const int Consultant = 4;
     }
 }
