@@ -13,7 +13,7 @@ var jsonString = File.ReadAllText("test.json");
 var config = JsonSerializer.Deserialize<Config>(jsonString);
 
 var parser =
-    new ScheduleParser.ScheduleParser(config ?? throw new NullReferenceException("Файл конфигурации имеет неверный формат"));
+    new ScheduleParser.ScheduleParser(config ?? throw new ArgumentException("Файл конфигурации имеет неверный формат"));
 
 var days = parser.Parse();
 

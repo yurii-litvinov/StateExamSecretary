@@ -5,45 +5,40 @@
 
 namespace ScheduleParser.Config;
 
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// Class for representing data from a JSON file.
+/// Class for representing schedule and themes data from a JSON file.
 /// </summary>
-[SuppressMessage(
-    "StyleCop.CSharp.OrderingRules",
-    "SA1206:Declaration keywords should follow order",
-    Justification = "Conflict with the Rider linter.")]
 public class Config
 {
     /// <summary>
     /// Gets or sets path or link to the file containing schedule.
     /// </summary>
     [JsonPropertyName("Расписание")]
-    public required string Schedule { get; set; }
+    required public string Schedule { get; set; }
 
     /// <summary>
     /// Gets or sets path or link to the file containing themes of the BS of Programming technologies.
     /// </summary>
     [JsonPropertyName("Темы ВКР, бакалавры техпрога")]
-    public required string BachelorsPt { get; set; }
+    required public string BachelorsPt { get; set; }
 
     /// <summary>
     /// Gets or sets path or link to the file containing themes of the BS of Software engineering.
     /// </summary>
     [JsonPropertyName("Темы ВКР, бакалавры ПИ")]
-    public required string BachelorsSe { get; set; }
+    required public string BachelorsSe { get; set; }
 
     /// <summary>
     /// Gets or sets path or link to the file containing themes of the MSC of Programming technologies.
     /// </summary>
     [JsonPropertyName("Темы ВКР, магистры техпрога")]
-    public required string MastersPt { get; set; }
+    required public string MastersPt { get; set; }
 
     /// <summary>
     /// Gets or sets path or link to the file containing themes of the MSC of Software engineering.
     /// </summary>
     [JsonPropertyName("Темы ВКР, магистры ПИ")]
-    public required string MastersSe { get; set; }
+    required public string MastersSe { get; set; }
 }

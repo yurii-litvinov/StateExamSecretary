@@ -123,7 +123,7 @@ public class ScheduleParser(Config.Config config)
         var supervisor = cells[ScheduleColumns.Supervisor].StringCellValue;
         var reviewer = cells[ScheduleColumns.Reviewer].StringCellValue;
 
-        return new StudentWork((int)number, studentName, theme, supervisor, string.Empty, reviewer);
+        return new StudentWork((int)number, studentName, theme, supervisor, reviewer);
     }
 
     /// <summary>

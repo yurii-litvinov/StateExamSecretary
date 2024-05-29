@@ -5,9 +5,23 @@
 
 namespace ScheduleParser.Models;
 
+/// <summary>
+/// Class containing information about one day of the schedule.
+/// </summary>
 public class DaySchedule(string date, List<string> commissionMembers, List<CommissionMeeting> commissionMeetings)
 {
-    public readonly string Date = date;
-    public List<string> CommissionMembers = commissionMembers;
-    public readonly List<CommissionMeeting> CommissionMeetings = commissionMeetings;
+    /// <summary>
+    /// Gets the date.
+    /// </summary>
+    public string Date { get; } = date;
+
+    /// <summary>
+    /// Gets a list of members of the commission participating in the meetings.
+    /// </summary>
+    public List<string> CommissionMembers { get; } = commissionMembers;
+
+    /// <summary>
+    /// Gets a list of commission meetings held on that day.
+    /// </summary>
+    public List<CommissionMeeting> CommissionMeetings { get; } = commissionMeetings;
 }

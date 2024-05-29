@@ -5,12 +5,38 @@
 
 namespace ScheduleParser.Models;
 
-public class StudentWork(int number, string studentName, string theme, string supervisor, string consultant, string reviewer)
+/// <summary>
+/// Class containing information about student's work.
+/// </summary>
+public class StudentWork(int number, string studentName, string theme, string supervisor, string reviewer)
 {
-    public int Number = number;
-    public string StudentName = studentName;
-    public string Theme = theme;
-    public string Supervisor = supervisor;
-    public string Consultant = consultant;
-    public string Reviewer = reviewer;
+    /// <summary>
+    /// Gets the student's number in the table.
+    /// </summary>
+    public int Number { get; } = number;
+
+    /// <summary>
+    /// Gets the student name.
+    /// </summary>
+    public string StudentName { get; } = studentName;
+
+    /// <summary>
+    /// Gets the theme of the student's work.
+    /// </summary>
+    public string Theme { get; } = theme;
+
+    /// <summary>
+    /// Gets the supervisor of the student's work.
+    /// </summary>
+    public string Supervisor { get; } = supervisor;
+
+    /// <summary>
+    /// Gets or sets the consultant of the student's work.
+    /// </summary>
+    public string? Consultant { get; set; }
+
+    /// <summary>
+    /// Gets the reviewer of the student's work.
+    /// </summary>
+    public string Reviewer { get; } = reviewer;
 }

@@ -5,9 +5,23 @@
 
 namespace ScheduleParser.Models;
 
+/// <summary>
+/// Class containing information about one meeting of the commission.
+/// </summary>
 public class CommissionMeeting(string timeAndAuditorium, string meetingInfo, List<StudentWork> studentWorks)
 {
-    public string TimeAndAuditorium = timeAndAuditorium;
-    public string MeetingInfo = meetingInfo;
-    public List<StudentWork> StudentWorks = studentWorks;
+    /// <summary>
+    /// Gets the time and auditorium of the meeting.
+    /// </summary>
+    public string TimeAndAuditorium { get; } = timeAndAuditorium;
+
+    /// <summary>
+    /// Gets information about the meeting (chair, level of education, number of SEC).
+    /// </summary>
+    public string MeetingInfo { get; } = meetingInfo;
+
+    /// <summary>
+    /// Gets a list of the works of students participating in the meeting.
+    /// </summary>
+    public List<StudentWork> StudentWorks { get; } = studentWorks;
 }
