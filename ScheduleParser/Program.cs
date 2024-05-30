@@ -6,14 +6,16 @@
 #pragma warning disable SA1200
 using System.Text.Json;
 using ScheduleParser.Config;
+
 #pragma warning restore SA1200
 
-var jsonString = File.ReadAllText("test.json");
+var jsonString = File.ReadAllText(Path.Combine("Config", "example.json"));
 
 var config = JsonSerializer.Deserialize<Config>(jsonString);
 
 var parser =
-    new ScheduleParser.ScheduleParser(config ?? throw new ArgumentException("Файл конфигурации имеет неверный формат"));
+    new ScheduleParser.ScheduleParser(
+        config ?? throw new InvalidOperationException("Файл конфигурации имеет неверный формат"));
 
 var days = parser.Parse();
 

@@ -38,7 +38,11 @@ public class ScheduleParser(Config.Config config)
 
         while (this.rowIndex < sheet.LastRowNum)
         {
-            this.FetchDay(sheet);
+            if (!CellsAreEmpty(sheet.GetRow(this.rowIndex).Cells))
+            {
+                this.FetchDay(sheet);
+            }
+
             this.rowIndex++;
         }
 
@@ -71,8 +75,8 @@ public class ScheduleParser(Config.Config config)
     /// <returns>Instance of <see cref="CommissionMeeting"/> class.</returns>
     private static CommissionMeeting FetchMeeting(List<List<ICell>> cells)
     {
-        var timeAndAuditorium = cells[0][ScheduleColumns.DateTimeAuditorium].StringCellValue;
-        var meetingInfo = cells[0][ScheduleColumns.MeetingInfo].StringCellValue;
+        var timeAndAuditorium = cells[0][ScheduleColumns.DateTimeAuditorium].StringCellValue.Trim();
+        var meetingInfo = cells[0][ScheduleColumns.MeetingInfo].StringCellValue.Trim();
         var studentWorks = cells[1..].Select(FetchStudentWork)
             .Where(work => work.StudentName != string.Empty).ToList();
 
@@ -118,10 +122,10 @@ public class ScheduleParser(Config.Config config)
     private static StudentWork FetchStudentWork(List<ICell> cells)
     {
         var number = cells[ScheduleColumns.Number].NumericCellValue;
-        var studentName = cells[ScheduleColumns.StudentName].StringCellValue;
-        var theme = cells[ScheduleColumns.Theme].StringCellValue;
-        var supervisor = cells[ScheduleColumns.Supervisor].StringCellValue;
-        var reviewer = cells[ScheduleColumns.Reviewer].StringCellValue;
+        var studentName = cells[ScheduleColumns.StudentName].StringCellValue.Trim();
+        var theme = cells[ScheduleColumns.Theme].StringCellValue.Trim();
+        var supervisor = cells[ScheduleColumns.Supervisor].StringCellValue.Trim();
+        var reviewer = cells[ScheduleColumns.Reviewer].StringCellValue.Trim();
 
         return new StudentWork((int)number, studentName, theme, supervisor, reviewer);
     }
@@ -173,7 +177,7 @@ public class ScheduleParser(Config.Config config)
         {
             var members = cells
                 .TakeWhile(rowCells => rowCells[ScheduleColumns.CommissionMember].CellType != CellType.Blank)
-                .Select(rowCells => rowCells[ScheduleColumns.CommissionMember].StringCellValue)
+                .Select(rowCells => rowCells[ScheduleColumns.CommissionMember].StringCellValue.Trim())
                 .ToList();
 
             var day = new DaySchedule(date, members, [meeting]);
@@ -193,7 +197,9 @@ public class ScheduleParser(Config.Config config)
         for (var i = 1; i < chairSheet.LastRowNum; i++)
         {
             var row = chairSheet.GetRow(i);
-            studentsAndConsultants.Add((row.GetCell(ThemesColumns.StudentName).StringCellValue, row.GetCell(ThemesColumns.Consultant).StringCellValue));
+            studentsAndConsultants.Add(
+                (row.GetCell(ThemesColumns.StudentName).StringCellValue.Trim(),
+                    row.GetCell(ThemesColumns.Consultant).StringCellValue.Trim()));
         }
 
         foreach (var studentWork in meeting.StudentWorks)
@@ -236,7 +242,7 @@ public class ScheduleParser(Config.Config config)
         public const int MeetingInfo = 2;
         public const int Supervisor = 3;
         public const int Reviewer = 4;
-        public const int CommissionMember = 5;
+        public const int CommissionMember = 6;
     }
 
     private static class ThemesColumns
