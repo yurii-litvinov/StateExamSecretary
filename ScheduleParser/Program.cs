@@ -9,7 +9,7 @@ using ScheduleParser.Config;
 
 #pragma warning restore SA1200
 
-var jsonString = File.ReadAllText(Path.Combine("Config", "example.json"));
+var jsonString = File.ReadAllText(Path.Combine("Config", "config.json"));
 
 var config = JsonSerializer.Deserialize<Config>(jsonString);
 
@@ -22,12 +22,8 @@ var days = parser.Parse();
 foreach (var day in days)
 {
     Console.WriteLine(day.Date);
-    foreach (var meeting in day.CommissionMeetings)
+    foreach (var member in day.CommissionMembers)
     {
-        Console.WriteLine($"{meeting.TimeAndAuditorium}, {meeting.MeetingInfo}");
-        foreach (var studentWork in meeting.StudentWorks)
-        {
-            Console.WriteLine($"Студент: {studentWork.StudentName}. Консультант: {studentWork.Consultant}");
-        }
+        Console.WriteLine(member);
     }
 }

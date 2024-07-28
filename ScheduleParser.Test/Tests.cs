@@ -1,8 +1,9 @@
-namespace ScheduleParserTest;
+namespace ScheduleParser.Test;
 
+using Models;
 using System.Text.Json;
-using ScheduleParser.Config;
-using ScheduleParser.Models;
+using Config;
+using Models;
 using FluentAssertions;
 
 [TestFixture]
@@ -91,7 +92,7 @@ public class Tests
     [Test]
     public void ParserTest()
     {
-        var parser = new ScheduleParser.ScheduleParser(config ?? throw new InvalidOperationException());
+        var parser = new ScheduleParser(config ?? throw new InvalidOperationException());
         var days = parser.Parse();
         days.Should().BeEquivalentTo(expectedDays);
     }
