@@ -5,25 +5,16 @@
 
 namespace XlsxGenerator;
 
+using System.Diagnostics.CodeAnalysis;
+
 /// <summary>
-/// Class that stores information about a cell.
+/// Record that stores information about a cell.
 /// </summary>
-public class CellInfo(string value, int width = 1, int height = 1)
-{
-    /// <summary>
-    /// Gets the value contained in the cell.
-    /// </summary>
-    public string Value { get; } = value;
-
-    /// <summary>
-    /// Gets the width of the cell (in the number of cells).
-    /// The default value = 1.
-    /// </summary>
-    public int Width { get; } = width;
-
-    /// <summary>
-    /// Gets the height of the cell (in the number of cells).
-    /// The default value = 1.
-    /// </summary>
-    public int Height { get; } = height;
-}
+/// <param name="Value">Value contained in the cell.</param>
+/// <param name="Width">Width of the cell (in the number of cells).</param>
+/// <param name="Height">Height of the cell (in the number of cells).</param>
+[SuppressMessage(
+    "StyleCop.CSharp.NamingRules",
+    "SA1313:Parameter names should begin with lower-case letter",
+    Justification = "In the case of record, the parameter names must be capitalized.")]
+public record CellInfo(string Value, int Width = 1, int Height = 1);

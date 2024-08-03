@@ -19,18 +19,14 @@ public class Sheet(ISheet sheet)
     /// <summary>
     /// Sets default height of the rows.
     /// </summary>
-    public void SetDefaultRowHeight(int height)
-    {
+    public void SetDefaultRowHeight(int height) =>
         sheet.DefaultRowHeightInPoints = height;
-    }
 
     /// <summary>
     /// Sets the width of the specified column.
     /// </summary>
-    public void SetColumnWidth(int index, int width)
-    {
+    public void SetColumnWidth(int index, int width) =>
         sheet.SetColumnWidth(index, width * ScalingValue);
-    }
 
     /// <summary>
     /// Automatically sets the width of columns with indexes in the range [start; end].
@@ -51,10 +47,8 @@ public class Sheet(ISheet sheet)
     /// <summary>
     /// Merges cells in the range [firstRow; lastRow] x [firstCol; lastCol].
     /// </summary>
-    public void MergeCells(int firstRow, int lastRow, int firstCol, int lastCol)
-    {
+    public void MergeCells(int firstRow, int lastRow, int firstCol, int lastCol) =>
         sheet.AddMergedRegion(new CellRangeAddress(firstRow, lastRow, firstCol, lastCol));
-    }
 
     /// <summary>
     /// Writes to the selected row, starting from the selected column, with the specified formatting.
