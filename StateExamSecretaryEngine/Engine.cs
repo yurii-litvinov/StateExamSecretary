@@ -28,13 +28,14 @@ public class Engine
     /// <summary>
     /// Creates the file "Config/config.json" in the working directory, if it does not exist.
     /// </summary>
-    public void CreateConfig()
+    /// <returns>Has the file been created or not.</returns>
+    public bool TryCreateConfig()
     {
         const string fileName = "config.json";
 
         if (File.Exists(Path.Combine(Directory.GetCurrentDirectory(), "Config", fileName)))
         {
-            return;
+            return false;
         }
 
         const string plug = "путь или ссылка на файл";
@@ -58,6 +59,8 @@ public class Engine
 
         Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "Config"));
         File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), "Config", fileName), jsonString);
+
+        return true;
     }
 
     /// <summary>

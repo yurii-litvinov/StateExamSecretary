@@ -10,7 +10,13 @@ using StateExamSecretaryEngine;
 
 var engine = new Engine();
 
-engine.CreateConfig();
+if (engine.TryCreateConfig())
+{
+    Console.WriteLine(
+        "В рабочей директории была создана папка Config. " +
+        "Перейдите в неё, настройте файл config.json и перезапустите программу.");
+    return;
+}
 
 try
 {
