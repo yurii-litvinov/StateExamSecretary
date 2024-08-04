@@ -41,4 +41,16 @@ public class Config
     /// </summary>
     [JsonPropertyName("Темы ВКР, магистры ПИ")]
     required public string MastersSe { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to save the orders of the day to Yandex.Disk.
+    /// </summary>
+    [JsonPropertyName("Сохранить порядки дня на Яндекс.Диск")]
+    required public bool SaveOrdersToDisk { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to upload the student files to Yandex.Disk.
+    /// </summary>
+    [JsonPropertyName("Загрузить файлы на Яндекс.Диск")]
+    required public bool UploadFilesToDisk { get; set; }
 }

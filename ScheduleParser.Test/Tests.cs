@@ -1,8 +1,8 @@
-namespace ScheduleParserTest;
+namespace ScheduleParser.Test;
 
+using Models;
 using System.Text.Json;
-using ScheduleParser.Config;
-using ScheduleParser.Models;
+using Config;
 using FluentAssertions;
 
 [TestFixture]
@@ -66,8 +66,7 @@ public class Tests
 
         var members1 = new List<string>
         {
-            "Председатель: Лисс Александр Рудольфович",
-            "Секретарь: Хохулина Виктория Александровна",
+            "Лисс Александр Рудольфович",
             "Луцив Дмитрий Вадимович",
             "Назаренко Артём Александрович",
             "Чижова Ангелина Сергеевна",
@@ -75,8 +74,7 @@ public class Tests
         };
         var members2 = new List<string>
         {
-            "Председатель: Лисс Александр Рудольфович",
-            "Секретарь: Хохулина Виктория Александровна",
+            "Лисс Александр Рудольфович",
             "Ковалев Владимир Сергеевич",
             "Пащенко Антон Евгеньевич",
             "Раковская Юлия Александровна",
@@ -91,7 +89,7 @@ public class Tests
     [Test]
     public void ParserTest()
     {
-        var parser = new ScheduleParser.ScheduleParser(config ?? throw new InvalidOperationException());
+        var parser = new ScheduleParser(config ?? throw new InvalidOperationException());
         var days = parser.Parse();
         days.Should().BeEquivalentTo(expectedDays);
     }

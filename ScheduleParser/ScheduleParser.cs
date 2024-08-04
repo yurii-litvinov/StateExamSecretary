@@ -177,7 +177,11 @@ public class ScheduleParser(Config.Config config)
         {
             var members = cells
                 .TakeWhile(rowCells => rowCells[ScheduleColumns.CommissionMember].CellType != CellType.Blank)
-                .Select(rowCells => rowCells[ScheduleColumns.CommissionMember].StringCellValue.Trim())
+                .Where(rowCells => !rowCells[ScheduleColumns.CommissionMember].StringCellValue.StartsWith("Секретарь"))
+                .Select(
+                    rowCells => rowCells[ScheduleColumns.CommissionMember].StringCellValue
+                        .Replace("Председатель: ", string.Empty)
+                        .Trim())
                 .ToList();
 
             var day = new DaySchedule(date, members, [meeting]);
