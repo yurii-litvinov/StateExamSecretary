@@ -20,13 +20,35 @@ if (engine.TryCreateConfig())
 
 try
 {
+    if (engine.CheckDiskParameters())
+    {
+        Console.WriteLine("Создание папки на Яндекс.Диске...");
+        await engine.CreateMainFolder();
+    }
+
     Console.WriteLine("Парсинг расписания...");
     engine.ParseSchedule();
-    Console.WriteLine("Готово!\n");
 
     Console.WriteLine("Генерация порядков дня...");
-    engine.GenerateDayOrders();
-    Console.WriteLine("Готово!");
+    await engine.GenerateDayOrders();
+
+    if (engine.CheckUploadFilesToDisk())
+    {
+        Console.WriteLine("Загрузка файлов на Яндекс.Диск...");
+        await engine.UploadFilesToDisk();
+
+        Console.WriteLine("Проверка наличия файлов...\n");
+        var report = engine.CheckForFiles();
+        if (report != string.Empty)
+        {
+            Console.WriteLine("⚠️ Не хватает некоторых файлов\n");
+            Console.WriteLine(report);
+        }
+        else
+        {
+            Console.WriteLine("✅ Все необходимые файлы на месте");
+        }
+    }
 }
 catch (Exception e)
 {
