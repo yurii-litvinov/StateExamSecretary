@@ -61,9 +61,9 @@ public class Config
     required public string Contents { get; set; }
 
     /// <summary>
-    /// Gets or sets client ID.
+    /// Gets or sets clientID.
     /// </summary>
-    [JsonPropertyName("Client ID")]
+    [JsonPropertyName("ClientID")]
     required public string ClientId { get; set; }
 
     /// <summary>
