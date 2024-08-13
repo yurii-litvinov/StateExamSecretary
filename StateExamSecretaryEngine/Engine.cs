@@ -233,7 +233,10 @@ public class Engine
         }
         else
         {
-            var folderPath = Directory.GetCurrentDirectory();
+            const string folderName = "Порядки дня";
+
+            Directory.CreateDirectory(folderName);
+            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), folderName);
 
             SaveToFile(stream, Path.Combine(folderPath, $"{sesName} ({date}).xlsx"));
             SaveToFile(stream, Path.Combine(folderPath, $"{publicName} ({date}).xlsx"));

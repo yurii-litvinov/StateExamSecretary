@@ -5,7 +5,6 @@
 
 namespace StateExamSecretaryEngine;
 
-using YandexDisk.Client.Protocol;
 using System.Text;
 using System.Diagnostics.CodeAnalysis;
 using ScheduleParser.Models;
@@ -59,9 +58,8 @@ public class StudentFileVerifier(DaySchedule day)
     /// <summary>
     /// Finds student works with missing files.
     /// </summary>
-    /// <param name="diskFilePaths">File paths on the disk.</param>
     /// <returns>Student works with missing files.</returns>
-    public IEnumerable<StudentWork> FindWorksWithMissingFiles(List<string> diskFilePaths)
+    public IEnumerable<StudentWork> FindWorksWithMissingFiles(List<string> filePaths)
     {
         List<StudentWork> studentWorks = [];
         foreach (var meeting in day.CommissionMeetings)
@@ -71,7 +69,7 @@ public class StudentFileVerifier(DaySchedule day)
 
         foreach (var work in studentWorks)
         {
-            var studentFilePaths = FetchStudentFiles(work, diskFilePaths);
+            var studentFilePaths = FetchStudentFiles(work, filePaths);
 
             foreach (var filePath in studentFilePaths)
             {
