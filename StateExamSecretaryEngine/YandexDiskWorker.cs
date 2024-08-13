@@ -14,18 +14,14 @@ using YandexDisk.Client.Http;
 using YandexDisk.Client.Protocol;
 
 /// <summary>
-/// Class for working with Yandex.Disk.
+/// Implementation of the <see cref="IDiskWorker"/> interface for working with Yandex.Disk.
 /// </summary>
-public class YandexDiskWorker
+public class YandexDiskWorker : IDiskWorker
 {
     private string? token;
     private IDiskApi? diskApi;
 
-    /// <summary>
-    /// Uploads a file to disk using the specified path.
-    /// </summary>
-    /// <param name="stream">File as a stream.</param>
-    /// <param name="path">Absolute path with the file name.</param>
+    /// <inheritdoc/>
     public async Task UploadFile(Stream stream, string path)
     {
         if (this.diskApi != null)
@@ -35,10 +31,7 @@ public class YandexDiskWorker
         }
     }
 
-    /// <summary>
-    /// Creates a folder on a disk.
-    /// </summary>
-    /// <param name="path">Absolute path with the folder name.</param>
+    /// <inheritdoc/>
     public async Task CreateFolder(string path)
     {
         if (this.diskApi != null)
@@ -65,31 +58,28 @@ public class YandexDiskWorker
         }
     }
 
-    /// <summary>
-    /// Gets information about a folder on the disk.
-    /// </summary>
-    /// <param name="path">Absolute path with the folder name.</param>
-    public async Task<Resource> GetFolder(string path)
+    /// <inheritdoc/>
+    public async Task<List<string>> GetFolderFiles(string path)
     {
-        if (this.diskApi != null)
+        if (this.diskApi == null)
         {
-            return await this.diskApi.MetaInfo.GetInfoAsync(
-                new ResourceRequest
-                {
-                    Path = $"{path}",
-                });
+            throw new UnauthorizedAccessException("Не удалось получить доступ к папке.");
         }
 
-        throw new UnauthorizedAccessException("Не удалось получить доступ к папке.");
+        var folderData = await this.diskApi.MetaInfo.GetInfoAsync(
+            new ResourceRequest
+            {
+                Path = $"{path}",
+            });
+
+        return folderData.Embedded.Items.Select(resource => resource.Path).ToList();
     }
 
-    /// <summary>
-    /// Gets an OAuth token to work with the disk.
-    /// </summary>
-    public async Task GetToken(string clientId, string clientSecret, string redirectUri)
+    /// <inheritdoc/>
+    public async Task GetOAuthToken(string clientId, string clientSecret, string redirectUri)
     {
-        var code = await this.GetConfirmationCode(clientId, redirectUri);
-        this.token = await this.ExchangeCodeForToken(
+        var code = await GetConfirmationCode(clientId, redirectUri);
+        this.token = await ExchangeCodeForToken(
             clientId,
             clientSecret,
             code ?? throw new InvalidOperationException("Неверный код подтверждения."));
@@ -97,7 +87,7 @@ public class YandexDiskWorker
         this.diskApi = new DiskHttpApi(this.token);
     }
 
-    private async Task<string?> GetConfirmationCode(string clientId, string redirectUri)
+    private static async Task<string?> GetConfirmationCode(string clientId, string redirectUri)
     {
         var codeUrl = $"https://oauth.yandex.ru/authorize?response_type=code&client_id={clientId}";
 
@@ -134,7 +124,7 @@ public class YandexDiskWorker
         return code;
     }
 
-    private async Task<string?> ExchangeCodeForToken(string clientId, string clientSecret, string code)
+    private static async Task<string?> ExchangeCodeForToken(string clientId, string clientSecret, string code)
     {
         const string tokenUrl = "https://oauth.yandex.ru/token";
 

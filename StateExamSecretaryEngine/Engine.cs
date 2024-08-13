@@ -26,7 +26,7 @@ public class Engine
     private readonly string mainFolderName = $"ГЭК {DateTime.Now.Year}";
     private List<DaySchedule> days = [];
     private Config? config;
-    private YandexDiskWorker? diskWorker;
+    private IDiskWorker? diskWorker;
 
     /// <summary>
     /// Creates the file "Config/config.json" in the working directory, if it does not exist.
@@ -90,33 +90,10 @@ public class Engine
     {
         var generator = new DayOrderGenerator();
 
-        const string sesName = "Порядок дня для ГЭК";
-        const string publicName = "Порядок дня для широкой публики";
-
         foreach (var day in this.days)
         {
-            if (this.config is { SaveOrdersToDisk: true } && this.diskWorker != null)
-            {
-                var folderPath = $"{this.mainFolderName}/{day.Date}";
-                await this.diskWorker.CreateFolder(folderPath);
-                await this.diskWorker.CreateFolder($"{folderPath}/Материалы");
-                await this.diskWorker.CreateFolder($"{folderPath}/Документы");
-                await this.diskWorker.UploadFile(
-                    generator.GenerateSES(day),
-                    $"{folderPath}/{sesName} ({day.Date}).xlsx");
-                await this.diskWorker.UploadFile(
-                    generator.GeneratePublic(day),
-                    $"{folderPath}/{publicName} ({day.Date}).xlsx");
-            }
-            else
-            {
-                SaveToFile(
-                    generator.GenerateSES(day),
-                    Path.Combine(Directory.GetCurrentDirectory(), $"{sesName} ({day.Date}).xlsx"));
-                SaveToFile(
-                    generator.GeneratePublic(day),
-                    Path.Combine(Directory.GetCurrentDirectory(), $"{publicName} ({day.Date}).xlsx"));
-            }
+            await this.SaveOrUploadDayOrder(generator.GenerateSES(day), day.Date);
+            await this.SaveOrUploadDayOrder(generator.GeneratePublic(day), day.Date);
         }
     }
 
@@ -137,10 +114,10 @@ public class Engine
     /// </summary>
     public async Task CreateMainFolder()
     {
-        if (this.config != null)
+        await this.SetDiskWorker();
+
+        if (this.diskWorker != null)
         {
-            this.diskWorker = new YandexDiskWorker();
-            await this.diskWorker.GetToken(this.config.ClientId, this.config.ClientSecret, this.config.RedirectUri);
             await this.diskWorker.CreateFolder(this.mainFolderName);
         }
     }
@@ -175,7 +152,7 @@ public class Engine
     /// Checks for files on the disk.
     /// </summary>
     /// <returns>Verification result report.</returns>
-    public string CheckForFiles()
+    public string CheckForFilesOnDisk()
     {
         if (this.diskWorker == null)
         {
@@ -187,10 +164,11 @@ public class Engine
         foreach (var day in this.days)
         {
             var verifier = new StudentFileVerifier(day);
-            var folderData = this.diskWorker
-                .GetFolder($"/{this.mainFolderName}/{day.Date}/Материалы").Result;
 
-            report.Append(BuildReport(verifier.FindWorksWithMissingFiles(folderData)));
+            var diskFilePaths = this.diskWorker
+                .GetFolderFiles($"/{this.mainFolderName}/{day.Date}/Материалы").Result;
+
+            report.Append(BuildReport(verifier.FindWorksWithMissingFiles(diskFilePaths)));
         }
 
         return report.ToString();
@@ -237,9 +215,46 @@ public class Engine
         stream.CopyTo(fileStream);
     }
 
+    private async Task SaveOrUploadDayOrder(Stream stream, string date)
+    {
+        const string sesName = "Порядок дня для ГЭК";
+        const string publicName = "Порядок дня для широкой публики";
+
+        if (this.config is { SaveOrdersToDisk: true } && this.diskWorker != null)
+        {
+            var folderPath = $"{this.mainFolderName}/{date}";
+
+            await this.diskWorker.CreateFolder(folderPath);
+            await this.diskWorker.CreateFolder($"{folderPath}/Материалы");
+            await this.diskWorker.CreateFolder($"{folderPath}/Документы");
+
+            await this.diskWorker.UploadFile(stream, $"{folderPath}/{sesName} ({date}).xlsx");
+            await this.diskWorker.UploadFile(stream, $"{folderPath}/{publicName} ({date}).xlsx");
+        }
+        else
+        {
+            var folderPath = Directory.GetCurrentDirectory();
+
+            SaveToFile(stream, Path.Combine(folderPath, $"{sesName} ({date}).xlsx"));
+            SaveToFile(stream, Path.Combine(folderPath, $"{publicName} ({date}).xlsx"));
+        }
+    }
+
     private void SetConfig()
     {
         var jsonString = File.ReadAllText(Path.Combine("Config", "config.json"));
         this.config = JsonSerializer.Deserialize<Config>(jsonString);
+    }
+
+    private async Task SetDiskWorker()
+    {
+        if (this.config != null)
+        {
+            this.diskWorker = new YandexDiskWorker();
+            await this.diskWorker.GetOAuthToken(
+                this.config.ClientId,
+                this.config.ClientSecret,
+                this.config.RedirectUri);
+        }
     }
 }

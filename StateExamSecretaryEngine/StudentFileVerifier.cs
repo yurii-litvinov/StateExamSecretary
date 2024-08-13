@@ -59,17 +59,15 @@ public class StudentFileVerifier(DaySchedule day)
     /// <summary>
     /// Finds student works with missing files.
     /// </summary>
-    /// <param name="folderData">Information about the folder on Yandex.Disk.</param>
+    /// <param name="diskFilePaths">File paths on the disk.</param>
     /// <returns>Student works with missing files.</returns>
-    public IEnumerable<StudentWork> FindWorksWithMissingFiles(Resource folderData)
+    public IEnumerable<StudentWork> FindWorksWithMissingFiles(List<string> diskFilePaths)
     {
         List<StudentWork> studentWorks = [];
         foreach (var meeting in day.CommissionMeetings)
         {
             studentWorks.AddRange(meeting.StudentWorks);
         }
-
-        var diskFilePaths = folderData.Embedded.Items.Select(resource => resource.Path).ToList();
 
         foreach (var work in studentWorks)
         {

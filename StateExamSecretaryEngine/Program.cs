@@ -38,7 +38,7 @@ try
         await engine.UploadFilesToDisk();
 
         Console.WriteLine("Проверка наличия файлов...\n");
-        var report = engine.CheckForFiles();
+        var report = engine.CheckForFilesOnDisk();
         if (report != string.Empty)
         {
             Console.WriteLine("⚠️ Не хватает некоторых файлов\n");
