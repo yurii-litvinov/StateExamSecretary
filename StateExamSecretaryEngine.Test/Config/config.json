@@ -1,0 +1,13 @@
+{
+  "Расписание": "test_schedule.xlsx",
+  "Темы ВКР, бакалавры техпрога": "test_themes.xlsx",
+  "Темы ВКР, бакалавры ПИ": "https://disk.yandex.ru/i/6c0cER7PSbpV6Q",
+  "Темы ВКР, магистры техпрога": "test_themes.xlsx",
+  "Темы ВКР, магистры ПИ": "https://disk.yandex.ru/i/6c0cER7PSbpV6Q",
+  "Сохранить порядки дня на Яндекс.Диск": false,
+  "Загрузить файлы на Яндекс.Диск": false,
+  "Материалы": "TestContents",
+  "ClientID": "",
+  "Client secret": "",
+  "Redirect URI": ""
+}

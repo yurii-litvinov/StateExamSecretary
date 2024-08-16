@@ -39,4 +39,29 @@ public class StudentWork(int number, string studentName, string theme, string su
     /// Gets the reviewer of the student's work.
     /// </summary>
     public string Reviewer { get; } = reviewer;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether student has a report file.
+    /// </summary>
+    public bool HasReport { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether student has a presentation file.
+    /// </summary>
+    public bool HasPresentation { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether student has a supervisor's review file.
+    /// </summary>
+    public bool HasSupervisorReview { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether student has a consultant's review file.
+    /// </summary>
+    public bool HasConsultantReview { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether student has a reviewer's review file.
+    /// </summary>
+    public bool HasReviewerReview { get; set; } = false;
 }

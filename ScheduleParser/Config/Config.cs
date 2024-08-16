@@ -53,4 +53,28 @@ public class Config
     /// </summary>
     [JsonPropertyName("Загрузить файлы на Яндекс.Диск")]
     required public bool UploadFilesToDisk { get; set; }
+
+    /// <summary>
+    /// Gets or sets path to the folder with the contents.
+    /// </summary>
+    [JsonPropertyName("Материалы")]
+    required public string Contents { get; set; }
+
+    /// <summary>
+    /// Gets or sets clientID.
+    /// </summary>
+    [JsonPropertyName("ClientID")]
+    required public string ClientId { get; set; }
+
+    /// <summary>
+    /// Gets or sets client secret.
+    /// </summary>
+    [JsonPropertyName("Client secret")]
+    required public string ClientSecret { get; set; }
+
+    /// <summary>
+    /// Gets or sets redirect URI.
+    /// </summary>
+    [JsonPropertyName("Redirect URI")]
+    required public string RedirectUri { get; set; }
 }

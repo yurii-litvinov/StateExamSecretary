@@ -209,7 +209,8 @@ public class ScheduleParser(Config.Config config)
         foreach (var studentWork in meeting.StudentWorks)
         {
             var student = studentWork.StudentName;
-            foreach (var pair in studentsAndConsultants.Where(pair => student == pair.Item1))
+            foreach (var pair in studentsAndConsultants
+                         .Where(pair => student == pair.Item1 && pair.Item2 != string.Empty))
             {
                 studentWork.Consultant = pair.Item2;
             }

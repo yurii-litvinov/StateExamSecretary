@@ -1,15 +1,16 @@
-namespace ScheduleParser.Test;
+namespace StateExamSecretaryEngine.Test;
 
-using Models;
+using ScheduleParser.Models;
 using System.Text.Json;
-using Config;
+using ScheduleParser.Config;
 using FluentAssertions;
 
 [TestFixture]
 public class Tests
 {
-    private List<DaySchedule> expectedDays = [];
+    private readonly List<DaySchedule> expectedDays = [];
     private Config? config;
+    private StudentFileVerifier? verifier;
 
     [OneTimeSetUp]
     public void Setup()
@@ -19,8 +20,75 @@ public class Tests
         var projectDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.Parent?.Parent?.FullName;
         Directory.SetCurrentDirectory(projectDirectory ?? throw new InvalidOperationException());
 
-        var jsonString = File.ReadAllText("test.json");
+        var jsonString = File.ReadAllText(Path.Combine("Config", "config.json"));
         config = JsonSerializer.Deserialize<Config>(jsonString);
+    }
+
+    [Test, Order(1)]
+    public void ParserTest()
+    {
+        var parser = new ScheduleParser.ScheduleParser(config ?? throw new InvalidOperationException());
+        var days = parser.Parse();
+        days.Should().BeEquivalentTo(expectedDays);
+    }
+
+    [Test, Order(2)]
+    public void VerificationTest()
+    {
+        if (config == null || verifier == null) return;
+
+        var folderPath = config.Contents;
+        var expectedPaths = new List<string>
+        {
+            Path.Combine(folderPath, "Babich-presentation.pdf"),
+            Path.Combine(folderPath, "Vyatkin.Artyom-reviewer-review.pdf"),
+            Path.Combine(folderPath, "Бабич-отзыв.pdf"),
+            Path.Combine(folderPath, "Бабич-рецензия.pdf"),
+            Path.Combine(folderPath, "Бабич.Никита-отчёт.pdf"),
+            Path.Combine(folderPath, "Вяткин-отзыв.pdf"),
+            Path.Combine(folderPath, "Вяткин-отзыв-консультанта.pdf"),
+            Path.Combine(folderPath, "Вяткин.Артём-отчёт.pdf")
+        };
+
+        verifier.VerifyFiles(folderPath).Should().BeEquivalentTo(expectedPaths);
+    }
+
+    [Test]
+    public void MissingFilesSearchTest()
+    {
+        if (config == null || verifier == null)
+
+            return;
+
+
+        var folderPath = config.Contents;
+        var expectedWorks = new List<StudentWork> { expectedDays[1].CommissionMeetings[0].StudentWorks[1] };
+
+        verifier.FindWorksWithMissingFiles(Directory.GetFiles(folderPath).ToList()).Should()
+            .BeEquivalentTo(expectedWorks);
+    }
+
+    [Test]
+    public async Task DayOrderGenerationTest()
+    {
+        var engine = new Engine();
+
+        engine.TryCreateConfig();
+        engine.ParseSchedule();
+        await engine.GenerateDayOrders();
+
+        var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "Порядки дня");
+        Assert.That(Directory.Exists(folderPath), Is.True);
+
+        var expectedFiles = new List<string>
+        {
+            Path.Combine(folderPath, "Порядок дня для ГЭК (26 мая).xlsx"),
+            Path.Combine(folderPath, "Порядок дня для широкой публики (26 мая).xlsx"),
+            Path.Combine(folderPath, "Порядок дня для ГЭК (29 мая).xlsx"),
+            Path.Combine(folderPath, "Порядок дня для широкой публики (29 мая).xlsx")
+        };
+
+        Directory.GetFiles(folderPath).Should().BeEquivalentTo(expectedFiles);
     }
 
     private void GetExpectedData()
@@ -48,10 +116,6 @@ public class Tests
         };
 
         studentWorks[0].Consultant = "Спирин Егор Сергеевич, программист-разработчик, ООО “В Контакте”";
-        studentWorks[1].Consultant = string.Empty;
-        studentWorks[2].Consultant = string.Empty;
-        studentWorks[3].Consultant = string.Empty;
-        studentWorks[4].Consultant = "Анастасия Андреевна Корепанова, аспирант СПбГУ";
         studentWorks[5].Consultant = "Харитонов Никита Алексеевич, аспирант СПбГУ";
 
         var meetings = new List<CommissionMeeting>
@@ -84,13 +148,7 @@ public class Tests
 
         expectedDays.Add(new DaySchedule("26 мая", members1, [meetings[0], meetings[1]]));
         expectedDays.Add(new DaySchedule("29 мая", members2, [meetings[2]]));
-    }
 
-    [Test]
-    public void ParserTest()
-    {
-        var parser = new ScheduleParser(config ?? throw new InvalidOperationException());
-        var days = parser.Parse();
-        days.Should().BeEquivalentTo(expectedDays);
+        verifier = new StudentFileVerifier(expectedDays[1]);
     }
 }
