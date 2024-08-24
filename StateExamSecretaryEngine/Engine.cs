@@ -92,8 +92,7 @@ public class Engine
 
         foreach (var day in this.days)
         {
-            await this.SaveOrUploadDayOrder(generator.GenerateSES(day), day.Date);
-            await this.SaveOrUploadDayOrder(generator.GeneratePublic(day), day.Date);
+            await this.SaveOrUploadDayOrder(generator.GenerateSES(day), generator.GeneratePublic(day), day.Date);
         }
     }
 
@@ -215,7 +214,7 @@ public class Engine
         stream.CopyTo(fileStream);
     }
 
-    private async Task SaveOrUploadDayOrder(Stream stream, string date)
+    private async Task SaveOrUploadDayOrder(Stream sesStream, Stream publicStream, string date)
     {
         const string sesName = "Порядок дня для ГЭК";
         const string publicName = "Порядок дня для широкой публики";
@@ -228,8 +227,8 @@ public class Engine
             await this.diskWorker.CreateFolder($"{folderPath}/Материалы");
             await this.diskWorker.CreateFolder($"{folderPath}/Документы");
 
-            await this.diskWorker.UploadFile(stream, $"{folderPath}/{sesName} ({date}).xlsx");
-            await this.diskWorker.UploadFile(stream, $"{folderPath}/{publicName} ({date}).xlsx");
+            await this.diskWorker.UploadFile(sesStream, $"{folderPath}/{sesName} ({date}).xlsx");
+            await this.diskWorker.UploadFile(publicStream, $"{folderPath}/{publicName} ({date}).xlsx");
         }
         else
         {
@@ -238,8 +237,8 @@ public class Engine
             Directory.CreateDirectory(folderName);
             var folderPath = Path.Combine(Directory.GetCurrentDirectory(), folderName);
 
-            SaveToFile(stream, Path.Combine(folderPath, $"{sesName} ({date}).xlsx"));
-            SaveToFile(stream, Path.Combine(folderPath, $"{publicName} ({date}).xlsx"));
+            SaveToFile(sesStream, Path.Combine(folderPath, $"{sesName} ({date}).xlsx"));
+            SaveToFile(publicStream, Path.Combine(folderPath, $"{publicName} ({date}).xlsx"));
         }
     }
 
