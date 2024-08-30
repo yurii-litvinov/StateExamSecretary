@@ -33,8 +33,8 @@ public class Config
     /// <summary>
     /// Gets or sets path or link to the file containing themes of the MSC of Programming technologies.
     /// </summary>
-    [JsonPropertyName("Темы ВКР, магистры техпрога")]
-    required public string MastersPt { get; set; }
+    [JsonPropertyName("Темы ВКР, магистры матобеса")]
+    required public string MastersMo { get; set; }
 
     /// <summary>
     /// Gets or sets path or link to the file containing themes of the MSC of Software engineering.
