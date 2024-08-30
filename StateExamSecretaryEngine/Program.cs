@@ -18,39 +18,32 @@ if (engine.TryCreateConfig())
     return;
 }
 
-try
+if (engine.CheckDiskParameters())
 {
-    if (engine.CheckDiskParameters())
-    {
-        Console.WriteLine("Создание папки на Яндекс.Диске...");
-        await engine.CreateMainFolder();
-    }
-
-    Console.WriteLine("Парсинг расписания...");
-    engine.ParseSchedule();
-
-    Console.WriteLine("Генерация порядков дня...");
-    await engine.GenerateDayOrders();
-
-    if (engine.CheckUploadFilesToDisk())
-    {
-        Console.WriteLine("Загрузка файлов на Яндекс.Диск...");
-        await engine.UploadFilesToDisk();
-
-        Console.WriteLine("Проверка наличия файлов...\n");
-        var report = engine.CheckForFilesOnDisk();
-        if (report != string.Empty)
-        {
-            Console.WriteLine("⚠️ Не хватает некоторых файлов\n");
-            Console.WriteLine(report);
-        }
-        else
-        {
-            Console.WriteLine("✅ Все необходимые файлы на месте");
-        }
-    }
+    Console.WriteLine("Создание папки на Яндекс.Диске...");
+    await engine.CreateMainFolder();
 }
-catch (Exception e)
+
+Console.WriteLine("Парсинг расписания...");
+engine.ParseSchedule();
+
+Console.WriteLine("Генерация порядков дня...");
+await engine.GenerateDayOrders();
+
+if (engine.CheckUploadFilesToDisk())
 {
-    Console.WriteLine(e.Message);
+    Console.WriteLine("Загрузка файлов на Яндекс.Диск...");
+    await engine.UploadFilesToDisk();
+
+    Console.WriteLine("Проверка наличия файлов...\n");
+    var report = engine.CheckForFilesOnDisk();
+    if (report != string.Empty)
+    {
+        Console.WriteLine("⚠️ Не хватает некоторых файлов\n");
+        Console.WriteLine(report);
+    }
+    else
+    {
+        Console.WriteLine("✅ Все необходимые файлы на месте");
+    }
 }

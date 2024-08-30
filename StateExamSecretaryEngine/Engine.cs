@@ -49,7 +49,7 @@ public class Engine
             Schedule = plug,
             BachelorsPt = plug,
             BachelorsSe = plug,
-            MastersPt = plug,
+            MastersMo = plug,
             MastersSe = plug,
             SaveOrdersToDisk = true,
             UploadFilesToDisk = true,

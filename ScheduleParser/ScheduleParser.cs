@@ -131,6 +131,21 @@ public class ScheduleParser(Config.Config config)
     }
 
     /// <summary>
+    /// Parses meeting info from schedule to chair and program level.
+    /// </summary>
+    /// <returns>A pair of chair and program level.</returns>
+    private static (string Chair, string Level) ParseMeetingInfo(string meetingInfo)
+    {
+        var splitInfo = meetingInfo.Split(", ");
+        if (splitInfo.Length != 3)
+        {
+            throw new InvalidOperationException($"Информация о заседании в расписании в некорректном формате: {meetingInfo}");
+        }
+
+        return (splitInfo[0], splitInfo[1]);
+    }
+
+    /// <summary>
     /// Adds a new day to the list of days or updates information about the last day.
     /// </summary>
     /// <param name="sheet">Sheet with schedule.</param>
@@ -167,7 +182,10 @@ public class ScheduleParser(Config.Config config)
             return;
         }
 
-        this.FetchConsultants(meeting);
+        if (this.HasConsultantInfo(meeting))
+        {
+            this.FetchConsultants(meeting);
+        }
 
         if (this.days.Count != 0 && this.days.Last().Date == date)
         {
@@ -190,12 +208,43 @@ public class ScheduleParser(Config.Config config)
     }
 
     /// <summary>
+    /// Returns link to a sheet with additional work info from config, or null if config field is empty.
+    /// </summary>
+    /// <param name="programme">Programme (bachelor or master, and a programme name).</param>
+    /// <returns>A link to a table or null if no link is provided.</returns>
+    /// <exception cref="ArgumentException">Unknown programme.</exception>
+    private string? GetThemesSheetLink(string programme)
+    {
+        var configLink =
+            programme switch
+            {
+                "бакалавры техпрога" => config.BachelorsPt,
+                "бакалавры ПИ" => config.BachelorsSe,
+                "магистры матобеса" => config.MastersMo,
+                "магистры ПИ" => config.MastersSe,
+                _ => throw new ArgumentException($"Неверный уровень образования: {programme}")
+            };
+        return configLink == string.Empty ? null : configLink;
+    }
+
+    /// <summary>
+    /// Checks that a table with additional information (for example, consultants) is available.
+    /// </summary>
+    /// <param name="meeting">Commission meeting for which we need to get consultants.</param>
+    /// <returns>True, if there is a link to consultants table, false if it is not specified.</returns>
+    private bool HasConsultantInfo(CommissionMeeting meeting)
+    {
+        var (chair, level) = ParseMeetingInfo(meeting.MeetingInfo);
+        return this.GetThemesSheetLink(level) != null;
+    }
+
+    /// <summary>
     /// Adds consultants from tables with themes for students at the meeting.
     /// </summary>
     private void FetchConsultants(CommissionMeeting meeting)
     {
-        var infoSplit = meeting.MeetingInfo.Split(", ");
-        var chairSheet = this.GetChairSheet(infoSplit[0], infoSplit[1]);
+        var (chair, level) = ParseMeetingInfo(meeting.MeetingInfo);
+        var chairSheet = this.GetChairSheet(chair, level);
 
         var studentsAndConsultants = new List<(string, string)>();
         for (var i = 1; i < chairSheet.LastRowNum; i++)
@@ -222,20 +271,15 @@ public class ScheduleParser(Config.Config config)
     /// </summary>
     private ISheet GetChairSheet(string chair, string level)
     {
-        var stream = GetStream(
-            level switch
-            {
-                "бакалавры техпрога" => config.BachelorsPt,
-                "бакалавры ПИ" => config.BachelorsSe,
-                "магистры техпрога" => config.MastersPt,
-                "магистры ПИ" => config.MastersSe,
-                _ => throw new ArgumentException($"Неверный уровень образования: {level}")
-            });
+        var stream = GetStream(this.GetThemesSheetLink(level)
+            ?? throw new InvalidOperationException($"В конфигурационном файле не указана таблица с темами для {chair} {level}"));
         var workbook = new XSSFWorkbook(stream);
 
         return chair == "Информатика/ПА"
             ? MergeSheets([workbook.GetSheet("Информатики"), workbook.GetSheet("ПА")])
-            : workbook.GetSheet(chair);
+            : chair == "Информатика"
+                ? workbook.GetSheet("Информатики")
+                : workbook.GetSheet(chair);
     }
 
     private static class ScheduleColumns
